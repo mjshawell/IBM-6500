@@ -1,0 +1,83 @@
+---
+title: "Construct and Measurement Table"
+subtitle: "CEP 04 · Improving Salesforce Adoption and Field Engagement at CVRx"
+author: "Mickyas Shawel, Luis Berumen, Tim Arana, Wenting Jiang"
+date: today
+format:
+  html:
+    embed-resources: true
+    toc: true
+    theme: cosmo
+---
+
+## Shared file
+
+The group's Construct and Measurement (C&M) Table is a Google Doc that **anyone with the link can view**:
+
+[**Construct and Measurement Table – Improving Salesforce Adoption and Field Engagement at CVRx**](https://docs.google.com/document/d/1QF2PtlMnRYaPcrSLMa1d2VKAfmblEUrePVOqH04vHxA/edit?usp=sharing)
+
+```{=html}
+<iframe src="https://docs.google.com/document/d/e/2PACX-1vTPH1r6e1sG7UYGVE2_XBBG-Izk3i0xSwbWtfMuDPhi-oCCgyK5DagLe19NNx4OL-cDCR-zCD3mA7N4/pub?embedded=true" style="width:100%;height:800px;border:1px solid #ccc;"></iframe>
+```
+
+## Presentation
+
+Our team presentation explaining the C&M Table:
+
+```{=html}
+<iframe data-external="1" src="https://docs.google.com/presentation/d/e/2PACX-1vR93hLjWvzyOa8BN3Fi4CYAqDW9KH2CcYUSJkfBuA2x0m_GRSFk6lTZp5Rp2cRphpMJ2s5JK5WQXnXE/pubembed?start=false&loop=false&delayms=3000" frameborder="0" width="1280" height="749" style="max-width:100%;" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
+```
+
+## Project context
+
+CVRx, a cardiovascular medical-device company, uses Salesforce as the system of record for accounts, opportunities and field activity, but usage across the commercial field team is uneven. Our central question is how CVRx can improve meaningful Salesforce adoption and strengthen engagement with the platform. The C&M Table is the blueprint that links our research questions and hypotheses to every measure in the survey and in the Salesforce data.
+
+## Research questions and hypotheses
+
+- **R1:** What is the current level of meaningful Salesforce adoption among CVRx field users, and where are records late or incomplete?
+- **R2:** Are there differences in meaningful adoption between (a) user roles, (b) territories/regions, and (c) newer and tenured field users?
+- **R3:** What are field users' attitudes and beliefs about Salesforce: its usefulness, ease of use, fit with their workflow, manager support, training, trust in its data, and administrative burden?
+- **R4:** Which factors are associated with stronger or weaker Salesforce adoption, and by how much?
+- **R5:** Which distinct user segments exist based on usage patterns, and do the segments differ in their drivers and barriers?
+- **R6:** Did the engagement pilot improve (a) meaningful adoption, (b) data quality and timeliness, and (c) user perceptions?
+- **H1:** Perceived usefulness of Salesforce will be positively associated with meaningful adoption.
+- **H2:** Perceived administrative burden will be negatively associated with meaningful adoption.
+- **H3:** Newer field users (18 months or less at CVRx) and tenured field users will differ in meaningful adoption.
+- **H4:** Pilot participants will show higher meaningful adoption after the pilot than before it, and a larger gain than the comparison group.
+
+## Table at a glance
+
+The full table (linked above) has six columns: construct definition, operationalization, source, type of scale, research question or hypothesis, and type of variable/statistics. A summary of its 28 constructs:
+
+| Construct | Measure | Scale | RQ / H | Role |
+|---------------|---------------|---------------|---------------|---------------|
+| Field user status | Q1 | Nominal | All | Screening |
+| Meaningful Salesforce adoption | SF1 (Adoption Index) | Interval | R1, R2, R4, R6a, H1–H4 | D.V. |
+| Adoption components | SF2–SF6 | Ratio | R1, R5, R6b | Descriptive; clustering inputs |
+| User role | SF7; C1 | Nominal | R2a | I.V. |
+| Territory / region | SF8; C5 | Nominal | R2b | I.V. |
+| Tenure | SF9; C2 | Ratio; recoded ordinal | R2c, H3 | I.V. |
+| Perceived usefulness | Q2–Q5 | Interval (5-pt Likert) | R3, R4, R5, H1 | Reliability; I.V. |
+| Perceived ease of use | Q6–Q9 | Interval (5-pt Likert) | R3, R4, R5 | Reliability; I.V. |
+| Workflow compatibility | Q10–Q12 | Interval (5-pt Likert) | R3, R4 | Reliability; I.V. |
+| Manager support | Q13–Q15 | Interval (5-pt Likert) | R3, R4 | Reliability; I.V. |
+| Training effectiveness | Q16–Q18 | Interval (5-pt Likert) | R3, R4 | Reliability; I.V. |
+| Trust in Salesforce data | Q19–Q21 | Interval (5-pt Likert) | R3, R4 | Reliability; I.V. |
+| Administrative burden | Q22–Q24 | Interval (5-pt Likert) | R3, R4, H2 | Reliability; I.V. |
+| Reasons for not keeping records current | Q25 | Nominal (check all) | R3 | Descriptive |
+| Overall perception of Salesforce | Q26 | Interval | R3, R6c | Descriptive; D.V. |
+| User segment | SEG (derived) | Nominal | R5 | Grouping variable |
+| Pilot group | P1 | Nominal | R6, H4 | I.V. |
+| Measurement period | P2 | Nominal | R6, H4 | I.V. |
+| Pilot feedback | Q27–Q29 | Interval | R6c | Descriptive |
+| Salesforce update frequency | B1 | Ordinal | R1, R4 | Control |
+| Update timing | B2 | Nominal | R3 | Descriptive |
+| Primary device | B3 | Nominal | R3, R4 | Control |
+| Time spent in Salesforce | B4 | Ratio | R3, R4, H2 | I.V. / control |
+| Medical device sales experience | C3 | Ordinal | R2, R4 | Control |
+| Prior CRM experience | C4 | Ordinal | R4, R5 | Control |
+| Comfort with new technology | C6 | Interval | R4 | Control |
+| Age group | C7 | Ordinal | R4 | Demographic control |
+| Open-ended feedback | O1, O2 | Open text | R3, R4 | Qualitative |
+
+*Measure codes: Q, B, C and O are survey items; SF codes are approved Salesforce data fields; P codes come from pilot records.*
