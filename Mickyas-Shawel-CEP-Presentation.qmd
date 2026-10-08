@@ -1,0 +1,377 @@
+---
+title: "Improving Meaningful Salesforce Adoption at CVRx"
+subtitle: "MSDM CEP Project Presentation"
+author: "Mickyas Shawel"
+institute: "Cal Poly Pomona — MSDM"
+date: today
+format:
+  revealjs:
+    theme: serif
+    width: 1600
+    height: 900
+    footer: "CVRx Salesforce Adoption — MSDM CEP"
+    transition: slide
+    transition-speed: default
+    incremental: false
+    toc: true
+    toc-depth: 1
+    slide-number: true
+    scrollable: true
+    smaller: true
+    code-fold: false
+    code-overflow: wrap
+    number-sections: false
+    embed-resources: true
+    css: styles.css
+editor: visual
+execute:
+  echo: true
+  freeze: auto
+---
+
+# Presentation Roadmap {#toc-slide}
+
+- Introduction and business problem
+- Analytics objectives
+- Evidence and research framework
+- Data and sampling plan
+- Proposed analytics methods
+- Next steps
+
+::: notes
+Open by explaining that this presentation focuses on the current CEP research design. Empirical findings are not presented because data collection and analysis are not yet complete.
+:::
+
+# Introduction
+
+## Why Salesforce Adoption Matters
+
+:::::: columns
+::: {.column width="55%"}
+CVRx depends on Salesforce information to support visibility into field activity, opportunity management, forecasting, and pipeline risk.
+
+A CRM creates value only when users enter information that is **accurate, complete, timely, and integrated into their work routines**.
+:::
+
+:::: {.column width="45%"}
+::: {.callout-important title="Central CEP Question"}
+How can CVRx improve **meaningful Salesforce adoption and field engagement**, rather than treating adoption as login frequency alone?
+:::
+::::
+::::::
+
+::: notes
+Stress the distinction between simply accessing Salesforce and meaningful use that produces reliable information for decision making.
+:::
+
+## Problem Statement
+
+- Salesforce opportunity documentation is not always entered with consistent **timing or completeness**.
+- Inconsistent use can reduce the reliability of CRM information available to leadership.
+- Limited visibility can make forecasting, opportunity management, and early identification of pipeline risk more difficult.
+- The CEP therefore examines both **how Salesforce is being used** and **why adoption patterns differ across users**.
+
+> The business problem is not simply whether employees use Salesforce; it is whether Salesforce use produces dependable information and supports the sales workflow.
+
+## From Business Problem to Analytics
+
+The project follows a sequential logic:
+
+. . .
+
+1.  **Measure adoption** using meaningful behavioral indicators.
+2.  **Explain adoption patterns** by identifying barriers and drivers.
+3.  **Segment users** so engagement strategies can be targeted.
+4.  **Evaluate engagement** to determine whether interventions improve adoption.
+
+::: notes
+Use the fragments to reveal the progression one objective at a time. Explain that later objectives depend on the measurement foundation established earlier.
+:::
+
+# Analytics Objective
+
+## AO2: Identify Adoption Barriers and Drivers
+
+**Primary focus for this presentation**
+
+Identify and quantify behavioral, organizational, workflow, and user-experience factors associated with meaningful Salesforce adoption.
+
+::: {.callout-tip title="Why AO2 Matters"}
+Knowing *who* uses Salesforce differently is useful. Knowing *why* those differences occur gives CVRx a basis for designing targeted improvements.
+:::
+
+## Candidate Drivers and Barriers
+
+::::: columns
+::: {.column width="50%"}
+### Potential Drivers
+
+- Perceived usefulness
+- Ease of use
+- Managerial support
+- Training quality
+- Workflow compatibility
+- Value of CRM information
+:::
+
+::: {.column width="50%"}
+### Potential Barriers
+
+- Administrative burden
+- Complexity
+- Redundant processes
+- Weak or insufficient training
+- Poor integration into routine work
+:::
+:::::
+
+# Importance
+
+## Why the Analysis Is Actionable
+
+A barrier-and-driver analysis can help CVRx move from a broad adoption initiative toward **specific, evidence-based actions**.
+
+For example:
+
+- a training problem suggests a different response than a workflow-fit problem;
+- administrative burden may require process redesign rather than additional communication;
+- strong managerial influence may make manager-led reinforcement more effective;
+- user segments may require different engagement strategies.
+
+# Literature Review
+
+## Established Models Relevant to the CEP
+
+The literature provides several well-established perspectives that can inform the research framework.
+
+| Framework | Contribution to the CEP |
+|------------------------------------|------------------------------------|
+| Technology Acceptance Model (TAM) | Usefulness and ease of use |
+| UTAUT | Performance, effort, social influence, facilitating conditions |
+| Task-Technology Fit | Fit between Salesforce and users' work tasks |
+| IS Success / Usage Perspectives | Quality, use, and value of information-system behavior |
+| Sales Technology / CRM Adoption Research | Sales-force-specific barriers, acceptance, and use |
+
+::: notes
+Explain that no single framework captures every organizational, workflow, and individual factor in this applied setting. The research framework can combine complementary constructs while maintaining theoretical justification.
+:::
+
+## Evidence Base and Key Sources
+
+- Davis (1989) — Technology Acceptance Model
+- Goodhue and Thompson (1995) — Task-Technology Fit
+- Venkatesh et al. (2003) — UTAUT
+- Avlonitis and Panagopoulos (2005) — CRM technology acceptance in the sales force
+- Buehrer, Senecal, and Pullins (2005) — sales-force technology usage
+- Speier and Venkatesh (2002) — sales technology acceptance and consequences
+
+The emerging framework treats Salesforce adoption as a behavior shaped by **individual perceptions, organizational support, social influence, and workflow/technology fit**.
+
+## Conceptual Framework
+
+```{r}
+#| echo: false
+#| output: asis
+framework <- data.frame(
+  Domain = c("Individual", "Organizational", "Social", "Workflow / Technical"),
+  Examples = c(
+    "Usefulness; ease of use",
+    "Training; managerial support",
+    "Peer and manager influence",
+    "Task fit; burden; process integration"
+  ),
+  Expected_Role = c("Driver", "Driver / barrier", "Driver / barrier", "Driver / barrier")
+)
+
+knitr::kable(framework,
+             col.names = c("Domain", "Illustrative Constructs", "Expected Role"),
+             caption = "Reproducible table: proposed AO2 construct domains")
+```
+
+::: notes
+This is a reproducible table generated directly in R. Clarify that the constructs are proposed based on the literature and will be finalized through the construct-and-measurement process.
+:::
+
+# Information Adequacy
+
+## What We Already Know
+
+Existing project information is sufficient to establish:
+
+- the organizational importance of reliable Salesforce use;
+- the need to distinguish meaningful adoption from simple system access;
+- plausible theoretical drivers and barriers;
+- the sequence connecting measurement, explanation, segmentation, and intervention.
+
+## What We Still Need
+
+::: {.callout-warning title="Additional Evidence Is Required"}
+The project does **not yet have finalized empirical results or a finalized sample size**. The research design therefore requires additional data collection and analysis before conclusions can be drawn about the strongest barriers and drivers at CVRx.
+:::
+
+Potential inputs include:
+
+- approved Salesforce activity and opportunity-history data;
+- completeness and timeliness indicators;
+- role and territory information where permitted;
+- voluntary survey responses;
+- limited qualitative feedback, if approved and appropriate.
+
+# Methods
+
+## Data and Sampling
+
+The current plan combines **behavioral system evidence** with **user-reported perceptions** where approvals permit.
+
+::::: columns
+::: {.column width="50%"}
+### System / CRM Data
+
+- Activity patterns
+- Opportunity history
+- Timeliness
+- Completeness
+- Workflow indicators
+:::
+
+::: {.column width="50%"}
+### Primary Research
+
+- Voluntary questionnaire
+- Constructs derived from the research framework
+- Screening and control variables
+- Limited interviews/focus groups if approved
+:::
+:::::
+
+::: notes
+Do not claim a sample size here. Data availability and approvals are still being finalized. Mention de-identification and organizational requirements when discussing access.
+:::
+
+## Data Wrangling Plan
+
+Before modeling, the project will need a reproducible workflow to:
+
+1.  import approved data sources;
+2.  inspect keys, missingness, and duplicate records;
+3.  join relevant tables using validated identifiers;
+4.  derive adoption indicators such as timeliness and completeness;
+5.  recode survey items and controls consistently;
+6.  create an analysis-ready dataset with documented transformations.
+
+::: {.callout-note title="Reproducibility"}
+Wrangling code should preserve a transparent path from raw approved data to the analytic variables used in the CEP.
+:::
+
+## Sample Characteristics
+
+Sample characteristics will be summarized **after approved data collection**. Depending on available fields, useful descriptive dimensions may include:
+
+- role or user type;
+- territory or organizational grouping;
+- Salesforce experience/tenure;
+- frequency and pattern of system activity;
+- relevant survey control variables.
+
+No empirical distribution is reported at this stage because the final analytic sample has not yet been established.
+
+## Measures
+
+The construct-and-measurement process will connect each theoretical construct to observable indicators.
+
+| Construct Area        | Illustrative Measure Type                       |
+|-----------------------|-------------------------------------------------|
+| Meaningful adoption   | Behavioral use, completeness, timeliness        |
+| Perceived usefulness  | Survey scale items                              |
+| Ease of use / effort  | Survey scale items                              |
+| Training/support      | Survey scale items / organizational information |
+| Workflow fit          | Survey scale items and process indicators       |
+| Administrative burden | Survey scale items                              |
+
+## Analytics Methods
+
+The final method should match the measurement quality and available sample.
+
+- **Descriptive analysis** to characterize adoption patterns.
+- **Reliability/measurement assessment** for multi-item constructs where appropriate.
+- **Correlation analysis** to examine initial associations.
+- **Regression or related multivariate modeling** to estimate which factors are associated with meaningful adoption while accounting for relevant controls.
+- **Segmentation methods** in later objectives to translate patterns into targeted engagement strategies.
+
+::: notes
+Avoid promising a specific final model before the data and measurement properties are known. Emphasize that method selection follows the AO and available evidence.
+:::
+
+# Reproducible Project Roadmap
+
+## Analytics Objectives as Data
+
+```{r}
+#| echo: true
+#| tbl-cap: "Reproducible AO roadmap created in R"
+ao_plan <- data.frame(
+  AO = paste0("AO", 1:4),
+  Purpose = c(
+    "Measure meaningful Salesforce adoption",
+    "Identify adoption barriers and drivers",
+    "Segment users and target engagement",
+    "Implement and evaluate engagement"
+  ),
+  Output = c(
+    "Adoption metrics",
+    "Driver/barrier evidence",
+    "Actionable user segments",
+    "Intervention evaluation"
+  )
+)
+
+knitr::kable(ao_plan)
+```
+
+The table is generated from R rather than manually pasted into the slide, satisfying the presentation's reproducibility requirement.
+
+# Next Steps
+
+## What Happens Next
+
+- Finalize the construct-and-measurement table.
+- Complete questionnaire design and required approvals before data collection.
+- Confirm accessible Salesforce fields and data quality.
+- Operationalize meaningful adoption measures.
+- Collect and prepare approved data.
+- Evaluate AO2 barriers and drivers using the selected analytical approach.
+- Use results to inform segmentation and targeted engagement in subsequent objectives.
+
+# Conclusion
+
+## Key Takeaway
+
+::: key-point
+The CEP is designed to move from **measuring Salesforce adoption** to **explaining why adoption differs**, then use that evidence to create and evaluate more targeted engagement strategies.
+:::
+
+The literature suggests that adoption is unlikely to be explained by a single factor. A defensible analysis should consider user perceptions, organizational support, social influence, and workflow/technology fit while grounding conclusions in CVRx-specific evidence.
+
+# References
+
+::: tiny
+Avlonitis, George J., and Nikolaos G. Panagopoulos. 2005. “Antecedents and Consequences of CRM Technology Acceptance in the Sales Force.” *Industrial Marketing Management* 34 (4): 355–368.
+
+Buehrer, Richard E., Sylvain Senecal, and Ellen Bolman Pullins. 2005. “Sales Force Technology Usage—Reasons, Barriers, and Support.” *Industrial Marketing Management* 34 (4): 389–398.
+
+Davis, Fred D. 1989. “Perceived Usefulness, Perceived Ease of Use, and User Acceptance of Information Technology.” *MIS Quarterly* 13 (3): 319–340.
+
+Goodhue, Dale L., and Ronald L. Thompson. 1995. “Task-Technology Fit and Individual Performance.” *MIS Quarterly* 19 (2): 213–236.
+
+Speier, Cheri, and Viswanath Venkatesh. 2002. “The Hidden Minefields in the Adoption of Sales Force Automation Technologies.” *Journal of Marketing* 66 (3): 98–111.
+
+Venkatesh, Viswanath, Michael G. Morris, Gordon B. Davis, and Fred D. Davis. 2003. “User Acceptance of Information Technology: Toward a Unified View.” *MIS Quarterly* 27 (3): 425–478.
+:::
+
+# Appendix
+
+## Project Links
+
+- [GitHub Repository](https://github.com/mjshawell/IBM-6500)
+
+- [Published RevealJS Presentation](https://mjshawell.github.io/IBM-6500/Mickyas-Shawel-CEP-Presentation.html)
