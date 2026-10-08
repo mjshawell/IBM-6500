@@ -1,0 +1,67 @@
+---
+title: "IRB Application and Approval Process: CITI Training and Certificate"
+author: "Mickyas Shawel"
+date: today
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    embed-resources: true
+    code-fold: true
+    code-tools: true
+    code-overflow: wrap
+    smooth-scroll: true
+execute:
+  echo: true
+  warning: false
+  message: false
+editor: visual
+---
+
+# Introduction
+
+This report documents the completion of the Cal Poly Pomona Institutional Review Board (IRB) CITI Training requirement. The purpose of the assignment is to become familiar with the IRB application and approval process, complete the required College of Business Administration CITI training modules, pass the assessment, and provide evidence of successful completion.
+
+# IRB Application and Approval Process
+
+Before beginning the CITI training, I reviewed the Cal Poly Pomona IRB protocol information and application requirements.
+
+[Cal Poly Pomona IRB Protocol Information](https://www.cpp.edu/research/research-compliance/irb/protocol.shtml)
+
+# CITI Training
+
+## Training Requirements
+
+For this assignment, I completed the **College of Business Administration** CITI training module. The training includes the **CPP Introduction to Human Subjects 101** module as well as material related to data collection in other countries and online research.
+
+The training process included:
+
+1.  Accessing the CPP IRB website and following the CITI training instructions.
+2.  Completing the College of Business Administration training modules.
+3.  Completing the required quizzes and assessments.
+4.  Achieving a passing score.
+5.  Obtaining the CITI completion certificate.
+
+# CITI Certificate
+
+The screenshot below provides evidence that I successfully completed the required CITI training.
+
+![](photos/citiCompletionCertificate_16155450_80172555.pdf)
+
+![](photos/citiCompletionReport_16155450_80172555.pdf)
+
+# Conclusion
+
+Completion of the CITI training provided an introduction to the ethical and regulatory responsibilities involved in research with human subjects. The training also reinforced the importance of protecting participants through appropriate informed-consent procedures, privacy and confidentiality safeguards, and IRB review.
+
+# Appendix
+
+## Required Links
+
+- [Cal Poly Pomona IRB Protocol Information](https://www.cpp.edu/research/research-compliance/irb/protocol.shtml)
+
+- [GitHub Repository — replace with your repository URL](https://github.com/USERNAME/REPOSITORY)
+
+- [Published GitHub Pages Report — replace with your published HTML URL](https://USERNAME.github.io/REPOSITORY/IRB-CITI-Training.html)
