@@ -1,0 +1,218 @@
+---
+title: "M05-Visualizing Data with Tables for MSDM CEP"
+author: "Mickyas Shawel"
+date: today
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 4
+    toc-expand: true
+    number-sections: true
+    code-link: true
+    code-fold: true
+    code-tools: true
+    code-overflow: wrap
+    embed-resources: true
+editor: visual
+execute:
+  freeze: auto
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+library(dplyr)
+library(tidyr)
+library(gt)
+library(gtExtras)
+```
+
+# Introduction
+
+> **Prompt:** Summarize what you learned from the videos. What did you like about the `gt` and `gtExtras` packages? How do tables complement charts? When would you prefer tables rather than charts?
+
+This module changed the way I think about tables. A table is not simply a place to put numbers after an analysis. When designed intentionally, it becomes a visualization that guides the reader toward comparisons and important values while preserving numerical precision.
+
+The `gt` workflow is useful because table construction is layered. I can begin with a data frame, transform it with `dplyr`, pass the result to `gt()`, and progressively improve the presentation. Titles establish context, column labels translate programming-oriented names into audience-friendly language, formatting functions improve readability, and source notes and footnotes document what the reader is seeing.
+
+::: callout-tip
+## Main takeaway
+
+A well-designed table combines the **precision of numbers** with some of the **visual guidance of a chart**. Formatting should make the analytical message easier to understand rather than simply decorate the output.
+:::
+
+# What I Learned
+
+## Building Tables with `gt`
+
+The videos demonstrated that `gt` separates analysis from presentation. I found this useful because the analytical data can remain tidy while the final table is designed for a nontechnical audience.
+
+Important capabilities included `tab_header()` for titles and subtitles, `tab_stubhead()` for identifying comparison groups, `cols_label()` for readable labels, `tab_spanner()` for grouping related measures, `fmt_number()` and `fmt_currency()` for consistent numeric formatting, `tab_footnote()` and `tab_source_note()` for context, and `data_color()` for adding a visual cue to numeric values.
+
+## What I Liked About `gtExtras`
+
+What I liked most about `gtExtras` is its ability to place compact visual information directly inside a table. Instead of forcing the audience to move between a table and a separate figure, a table can contain small visual summaries alongside exact statistics. A sparkline, for example, can show a pattern while adjacent columns preserve the exact values needed for interpretation.
+
+# Tables and Charts
+
+## How They Complement Each Other
+
+Charts and tables solve different communication problems. A chart is usually stronger when the main question concerns **shape, trend, ranking, or relationships**. A table becomes more valuable when the reader needs **specific values** or must compare several measures simultaneously.
+
+| Communication need              | Table     | Chart              |
+|---------------------------------|-----------|--------------------|
+| Retrieve an exact value         | Excellent | Moderate           |
+| Compare several statistics      | Excellent | Can become crowded |
+| Recognize a broad trend quickly | Moderate  | Excellent          |
+| Show relationships visually     | Limited   | Excellent          |
+| Provide a numerical reference   | Excellent | Moderate           |
+
+The formats therefore complement one another. A chart can establish the main pattern, while a table provides the precise values supporting that pattern.[^1]
+
+[^1]: The best format depends on the audience and analytical question rather than on one visualization type always being superior.
+
+## When I Would Prefer a Table
+
+I would favor a table when exact values matter, several statistics must be reported for the same groups, the audience is likely to look up individual values, or the information should function as a reference after a presentation. In an MSDM project, this could include sample characteristics, construct-level descriptive statistics, campaign metrics, model-comparison results, or survey summaries.
+
+# Applied Table
+
+> **Prompt:** Use the data for your MSDM CEP. If you do not have data yet, use the built-in `pizzaplace` dataset. Pick relevant variables and share descriptive statistics using `gt` and `gtExtras` together to show numbers and small charts in one table.
+
+## Data Choice
+
+My current MSDM CEP focuses on Salesforce adoption. Because final respondent-level CEP data are not yet available, I am using the assignment's permitted `gt::pizzaplace` dataset rather than creating artificial Salesforce results. The business context differs, but the reporting logic is transferable to future CEP descriptive statistics.
+
+```{r}
+#| label: inspect-data
+#| code-summary: "Inspect the pizzaplace data"
+data("pizzaplace", package = "gt")
+glimpse(pizzaplace)
+```
+
+## Data Wrangling
+
+For this demonstration, pizza **category** is the comparison group. I summarize order activity, quantity sold, revenue, average selling price, and the observed daily revenue pattern.
+
+```{r}
+pizzaplace_clean <- pizzaplace |>
+  rename(category = type) |>
+  mutate(date = as.Date(date))
+
+daily_category <- pizzaplace_clean |>
+  group_by(category, date) |>
+  summarise(
+    daily_revenue = sum(price, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+table_summary <- pizzaplace_clean |>
+  group_by(category) |>
+  summarise(
+    orders = n_distinct(id),
+    pizzas_sold = n(),
+    total_revenue = sum(price, na.rm = TRUE),
+    avg_price = mean(price, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  left_join(
+    daily_category |>
+      arrange(category, date) |>
+      group_by(category) |>
+      summarise(
+        revenue_trend = list(daily_revenue),
+        .groups = "drop"
+      ),
+    by = "category"
+  ) |>
+  arrange(desc(total_revenue))
+
+table_summary
+```
+
+## Presentation-Ready Table
+
+The table combines exact statistics with an embedded sparkline. The numerical columns support precise comparisons while the sparkline provides a compact view of how daily revenue varied across the observed period.
+
+```{r}
+#| label: tbl-category-performance
+#| tbl-cap: "Category-level descriptive statistics with embedded daily revenue trends"
+#| code-summary: "Create the publication-ready gt table"
+
+category_table <- table_summary |>
+  gt(rowname_col = "category") |>
+  tab_header(
+    title = md("**Pizza Category Performance**"),
+    subtitle = md("A reproducible table-design demonstration for future MSDM CEP reporting")
+  ) |>
+  tab_stubhead(label = "Category") |>
+  tab_spanner(label = "Volume", columns = c(orders, pizzas_sold)) |>
+  tab_spanner(label = "Financial Performance", columns = c(total_revenue, avg_price)) |>
+  cols_label(
+    orders = "Orders",
+    pizzas_sold = "Pizzas Sold",
+    total_revenue = "Revenue",
+    avg_price = "Avg. Price",
+    revenue_trend = "Daily Revenue Trend"
+  ) |>
+  fmt_integer(columns = c(orders, pizzas_sold), use_seps = TRUE) |>
+  fmt_currency(columns = c(total_revenue, avg_price), currency = "USD", decimals = 2) |>
+  gtExtras::gt_plt_sparkline(column = revenue_trend, same_limit = TRUE) |>
+  data_color(columns = total_revenue, palette = c("#F3F4F6", "#374151")) |>
+  cols_align(align = "center", columns = everything()) |>
+  cols_width(
+    stub() ~ px(120),
+    orders ~ px(100),
+    pizzas_sold ~ px(120),
+    total_revenue ~ px(130),
+    avg_price ~ px(110),
+    revenue_trend ~ px(220)
+  ) |>
+  tab_footnote(
+    footnote = "The sparkline represents the sequence of daily category revenue values in the dataset.",
+    locations = cells_column_labels(columns = revenue_trend)
+  ) |>
+  tab_source_note(
+    source_note = md("Source: `pizzaplace`, a built-in dataset distributed with the **gt** package.")
+  ) |>
+  opt_align_table_header(align = "left") |>
+  opt_footnote_marks(marks = "numbers")
+
+category_table
+```
+
+::: callout-note
+## Reading the table
+
+Color in the revenue column adds a visual comparison, while the embedded sparkline shows variation over time. Exact values remain visible, so the audience does not have to estimate them from graphical axes.
+:::
+
+# Connection to My MSDM CEP
+
+> **Prompt:** Explain why the table is worth adding to your MSDM project written report or presentation slides.
+
+A table of this type would be useful in my Salesforce adoption CEP because the project will eventually require comparisons across employees or analytically meaningful groups. Once actual study data are available, the same design can be adapted to summarize constructs or outcomes related to Salesforce adoption.
+
+For example, a future version could use rows for departments, roles, experience groups, or user segments and columns for measures such as adoption, perceived usefulness, perceived ease of use, training/support, or other constructs in the final research design. Exact means and sample sizes could appear beside a small visual summary.
+
+This would improve the project by making descriptive findings easier for a business audience to scan, preserving exact statistics, and creating a compact visual that can work in both the written report and presentation slides.
+
+::: callout-important
+## CEP application
+
+The `pizzaplace` results above are **not Salesforce findings**. They are a reproducible demonstration of the table-building method. The final CEP table should be regenerated from the actual study data once data collection is complete.
+:::
+
+# Reflection
+
+The biggest lesson from this module is that table design is part of analytical communication. Data wrangling determines what information is available, but table design determines how efficiently the audience can understand it.
+
+`gt` provides control over structure, labels, formatting, notes, and visual hierarchy, while `gtExtras` extends the table with compact graphical elements. I would use tables and charts together: charts for major patterns and relationships, and tables when the audience needs exact values, multiple statistics, or a reusable reference.
+
+# Appendix
+
+- [GitHub Repository](https://github.com/mjshawell/IBM-6500)
+- [Published M05 Report on GitHub Pages](https://mjshawell.github.io/IBM-6500/Mickyas-Shawel-M05-Table-Viz.html)
