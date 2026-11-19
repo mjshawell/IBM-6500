@@ -1,0 +1,223 @@
+ ---
+title: "CEP 11 — Salesforce CRM Data Preparation"
+subtitle: "CVRx Salesforce Adoption | AO2: Barriers and Drivers"
+author: "Mickyas Shawel"
+institute: "IBM 6500 | Cal Poly Pomona"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    code-fold: show
+    embed-resources: true
+execute:
+  echo: true
+  warning: false
+  message: false
+  error: false
+editor: source
+---
+
+# Assignment scope and methodological distinction
+
+**Individual contribution: Mickyas Shawel — AO2.** This report adapts CEP 11 data-preparation principles to **secondary Salesforce CRM data** because the Qualtrics survey has not yet been collected. It is a **CRM data-preparation deliverable, not a completed survey-data preparation or psychometric analysis**. Survey variable labels, Cronbach's alpha, and survey composite constructs cannot be evaluated from these operational logs.
+
+**Confidentiality:** The source workbook and all record-level outputs are kept in `data_private/` and `outputs_private/`, which are excluded from Git. Only aggregated, disclosure-reviewed findings should be published. Do not publish aliases, opportunity IDs, raw login histories, or employee-level tables.
+
+# Data collection and import
+
+The workbook supplied by CVRx contains five tabs: `Opps`, `OppStageHistory`, `OppFieldHist`, `UserLoginHist`, and `roster`. The companion dictionary describes keys, roles, and business rules. The snapshot runs through approximately **July 4, 2026**; the login-history coverage is narrower. The focus is **Territory Managers**, identified by `role == "REP"` in the roster.
+
+```{r}
+#| label: setup-import
+library(readxl)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(lubridate)
+library(knitr)
+library(stringr)
+
+source_file <- "data_private/CVRx_Data_070426.xlsx"
+stopifnot(file.exists(source_file))
+required_tabs <- c("Opps", "OppStageHistory", "OppFieldHist", "UserLoginHist", "roster")
+stopifnot(all(required_tabs %in% excel_sheets(source_file)))
+
+# Import only needed columns where practical; preserve identifiers as text.
+roster <- read_excel(source_file, sheet = "roster")
+logins <- read_excel(source_file, sheet = "UserLoginHist")
+field_hist <- read_excel(source_file, sheet = "OppFieldHist")
+opps <- read_excel(source_file, sheet = "Opps")
+stages <- read_excel(source_file, sheet = "OppStageHistory")
+
+tab_counts <- tibble(
+  table = required_tabs,
+  rows = c(nrow(opps), nrow(stages), nrow(field_hist), nrow(logins), nrow(roster)),
+  columns = c(ncol(opps), ncol(stages), ncol(field_hist), ncol(logins), ncol(roster))
+)
+knitr::kable(tab_counts, caption = "Source-table inventory (aggregated)")
+```
+
+# Data dictionary and measurement levels
+
+Unlike SPSS survey items, CRM variables are event timestamps, identifiers, categorical codes, and numeric activity measures. Their measurement level follows their **business meaning**, not whether they appear numeric in Excel.
+
+| Field | Table | Meaning | Analysis role |
+|:--|:--|:--|:--|
+| `alias` | roster, UserLoginHist | User join key | Nominal identifier; private |
+| `role` | roster | Job category | Nominal; `REP` is target group |
+| `APPLICATION` | UserLoginHist | Login client or integration | Nominal; distinguish automation |
+| `LOGINTIME` | UserLoginHist | Login timestamp | Temporal |
+| `CREATED_BY_ALIAS` | OppFieldHist | Field-history actor | Nominal; private |
+| `FIELD` | OppFieldHist | Edited opportunity field | Nominal; evaluate meaningfulness |
+| `CREATEDDATE` | OppFieldHist | Field-change timestamp | Temporal |
+| `OPP_ID` | Opps | Opportunity identifier | Nominal; private |
+
+# Data-quality audit
+
+The roster can contain multiple rows for the same person after role changes. Joining activity records directly to all roster rows may **multiply events**. For this descriptive preparation, create a **distinct set of REP aliases** for population membership, and keep role-history interpretation separate. A temporal role-as-of-event join requires verified role dates and is not performed here.
+
+```{r}
+#| label: roster-audit
+roster_audit <- tibble(
+  metric = c("Roster rows", "Distinct roster aliases", "REP role rows", "Distinct REP aliases", "REP aliases with multiple REP rows"),
+  value = c(
+    nrow(roster), n_distinct(roster$alias, na.rm = TRUE),
+    sum(roster$role == "REP", na.rm = TRUE),
+    n_distinct(roster$alias[roster$role == "REP"], na.rm = TRUE),
+    roster |> filter(role == "REP") |> count(alias) |> filter(n > 1) |> nrow()
+  )
+)
+knitr::kable(roster_audit, caption = "Roster population checks")
+rep_aliases <- roster |> filter(role == "REP", !is.na(alias)) |> distinct(alias)
+```
+
+## Date conversion and missingness
+
+Excel may represent dates as serial numbers or as date-time objects. Convert safely and verify date coverage before interpreting activity trends.
+
+```{r}
+#| label: date-normalization
+as_excel_datetime <- function(x) {
+  if (inherits(x, "POSIXt")) return(as.POSIXct(x, tz = "UTC"))
+  if (inherits(x, "Date")) return(as.POSIXct(x, tz = "UTC"))
+  if (is.numeric(x)) return(as.POSIXct(x * 86400, origin = "1899-12-30", tz = "UTC"))
+  suppressWarnings(as.POSIXct(x, tz = "UTC"))
+}
+
+logins <- logins |> mutate(login_dt = as_excel_datetime(LOGINTIME))
+field_hist <- field_hist |> mutate(edit_dt = as_excel_datetime(CREATEDDATE))
+
+missing_audit <- bind_rows(
+  tibble(table = "roster", field = c("alias", "role"), missing = c(sum(is.na(roster$alias)), sum(is.na(roster$role)))),
+  tibble(table = "UserLoginHist", field = c("alias", "LOGINTIME", "APPLICATION"), missing = c(sum(is.na(logins$alias)), sum(is.na(logins$login_dt)), sum(is.na(logins$APPLICATION)))),
+  tibble(table = "OppFieldHist", field = c("CREATED_BY_ALIAS", "CREATEDDATE", "FIELD"), missing = c(sum(is.na(field_hist$CREATED_BY_ALIAS)), sum(is.na(field_hist$edit_dt)), sum(is.na(field_hist$FIELD))))
+)
+knitr::kable(missing_audit, caption = "Missingness in essential fields")
+```
+
+# Cleaning and transformation
+
+## Login events: separate integrations from human activity
+
+The dictionary warns that integration accounts dominate raw login records. The **first defensible filter** is to retain only aliases in the REP roster. For a more conservative browser-oriented proxy, separately identify rows with `APPLICATION` containing `Browser` or `Salesforce`; this is **provisional** until the client confirms which applications represent genuine human activity. Neither proxy proves meaningful engagement.
+
+```{r}
+#| label: login-cleaning
+rep_logins <- logins |> semi_join(rep_aliases, by = "alias") |>
+  filter(!is.na(login_dt)) |>
+  mutate(login_date = as.Date(login_dt),
+         application_group = case_when(
+           str_detect(coalesce(APPLICATION, ""), regex("Browser|Salesforce", ignore_case = TRUE)) ~ "Browser/Salesforce-labelled",
+           TRUE ~ "Other application"
+         ))
+
+login_filter_audit <- tibble(
+  stage = c("All login records", "REP-alias login records", "REP browser/Salesforce-labelled records"),
+  events = c(nrow(logins), nrow(rep_logins), sum(rep_logins$application_group == "Browser/Salesforce-labelled"))
+)
+knitr::kable(login_filter_audit, caption = "Login filter retention (not unique users)")
+
+login_monthly <- rep_logins |>
+  filter(application_group == "Browser/Salesforce-labelled") |>
+  mutate(month = floor_date(login_date, "month")) |>
+  group_by(month) |>
+  summarise(events = n(), active_aliases = n_distinct(alias), .groups = "drop")
+
+if (nrow(login_monthly) > 0) {
+  ggplot(login_monthly, aes(month, events)) +
+    geom_col(fill = "#256f85") +
+    labs(title = "REP browser/Salesforce-labelled login events by month",
+         subtitle = "Provisional human-activity proxy; not validated meaningful engagement",
+         x = NULL, y = "Login events") + theme_minimal(base_size = 12)
+}
+```
+
+## Opportunity field changes: candidate meaningful engagement
+
+The field-history table contains changes by many actors, including creation/system-type events. Retain REP actors and distinguish `FIELD == "created"` from other field-history events. **Do not call all other edits meaningful:** the client must confirm which field names correspond to substantive sales work, and repeated events may describe a single action.
+
+```{r}
+#| label: field-cleaning
+rep_edits <- field_hist |>
+  semi_join(rep_aliases, by = c("CREATED_BY_ALIAS" = "alias")) |>
+  filter(!is.na(edit_dt)) |>
+  mutate(edit_date = as.Date(edit_dt),
+         event_type = if_else(tolower(coalesce(FIELD, "")) == "created",
+                              "Creation-labelled event", "Other field-history event"))
+
+field_audit <- tibble(
+  stage = c("All field-history records", "REP-actor field-history records", "REP non-creation field-history records"),
+  events = c(nrow(field_hist), nrow(rep_edits), sum(rep_edits$event_type == "Other field-history event"))
+)
+knitr::kable(field_audit, caption = "Field-history filtering audit")
+
+edit_monthly <- rep_edits |>
+  filter(event_type == "Other field-history event") |>
+  mutate(month = floor_date(edit_date, "month")) |>
+  group_by(month) |>
+  summarise(events = n(), active_aliases = n_distinct(CREATED_BY_ALIAS), .groups = "drop")
+
+if (nrow(edit_monthly) > 0) {
+  ggplot(edit_monthly, aes(month, events)) +
+    geom_col(fill = "#526d91") +
+    labs(title = "REP non-creation opportunity field-history events by month",
+         subtitle = "Candidate engagement indicator; field-level validation pending",
+         x = NULL, y = "Events") + theme_minimal(base_size = 12)
+}
+```
+
+# Validation and AO2 interpretation
+
+**What the CRM data can establish:** activity coverage, the prevalence of automated/integration events, REP-linked login patterns, and candidate opportunity-update activity. These measures can support AO1 adoption measurement and inform AO2's behavioral context.
+
+**What the CRM data cannot establish on its own:** perceived usefulness, ease of use, training quality, organizational barriers, or causal drivers of adoption. Those require a validated survey, interviews, or another appropriate source.
+
+**Important limitations:**
+
+- `role == "REP"` identifies aliases ever associated with that role, not necessarily in that role on each event date.
+- `Browser/Salesforce` application matching is provisional, not a validated human-login classifier.
+- `OppFieldHist` rows are not necessarily independent human actions; some may be system-generated or duplicate representations.
+- Login data covers a limited period. Comparing raw login totals with full-history opportunity edits is not meaningful without harmonizing observation windows.
+- Avoid employee-level tables and small-cell disclosures in the public HTML.
+
+# Preparation checkpoints
+
+| Checkpoint | Status / next action |
+|:--|:--|
+| Source tables imported | Checked by `stopifnot` and inventory |
+| Target population defined | REP alias membership; temporal roles require further work |
+| Automated activity considered | Provisional application split; confirm with client |
+| Data transformations documented | Original columns preserved, derived dates/event groups added |
+| Meaningful engagement definition | **Pending client validation of field names and application types** |
+| Survey scales and reliability | **Not applicable until survey data is received** |
+| Survey composite indices | **Not applicable until survey data is received** |
+| Confidentiality | Raw workbooks and record-level outputs excluded from Git |
+
+## Appendix: GitHub Links
+
+- [GitHub Repository](https://github.com/mjshawell/IBM-6500)
+- [Published CEP 11 Salesforce Data Preparation Report](https://mjshawell.github.io/IBM-6500/CEP11-CVRx-Salesforce.html)
+
+
