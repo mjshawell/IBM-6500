@@ -1,0 +1,214 @@
+---
+title: "IC10-2-1 | Case 31 Data Preparation"
+subtitle: "Employees Federal Credit Union — Reproducible SPSS-to-R Workflow"
+author: "Mickyas Shawel"
+institute: "IBM 6500 | Cal Poly Pomona"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    code-fold: show
+    embed-resources: true
+    theme: cosmo
+execute:
+  echo: true
+  warning: false
+  message: false
+  error: false
+editor: source
+---
+
+# Research context and preparation objectives
+
+**Individual contribution: Mickyas Shawel**
+
+Case 31 examines members' experiences with Employees Federal Credit Union (EFCU), including reasons for joining, perceived employee proficiency, service awareness, borrowing decisions, and overall operations. The original case describes a mailed questionnaire and a random sample of 300 members from a 3,531-member frame; this is **not** the same as the number of usable records in the provided SPSS file. This report documents the observed file separately from the case narrative.
+
+**Preparation goals:** inspect SPSS metadata, compare codes to the questionnaire, preserve raw responses, identify special categories, create carefully defined derived measures, audit completeness, and export a cleaned file.
+
+# Import and inspect the original SPSS file
+
+```{r}
+#| label: setup
+required <- c("haven", "dplyr", "tidyr", "ggplot2", "knitr", "tibble", "purrr")
+missing_packages <- setdiff(required, rownames(installed.packages()))
+if (length(missing_packages)) stop("Install required packages first: ", paste(missing_packages, collapse=", "))
+invisible(lapply(required, library, character.only = TRUE))
+raw_path <- "data/Case 31 Data_efcu_1.sav"
+stopifnot(file.exists(raw_path))
+raw <- haven::read_sav(raw_path, user_na = TRUE)
+cat("Imported observations:", nrow(raw), "\nImported variables:", ncol(raw), "\n")
+```
+
+```{r}
+#| label: metadata
+metadata <- tibble::tibble(
+  variable = names(raw),
+  variable_label = vapply(raw, function(x) {
+    lab <- attr(x, "label")
+    if (is.null(lab)) "" else as.character(lab)
+  }, character(1)),
+  class = vapply(raw, function(x) paste(class(x), collapse = "/"), character(1)),
+  value_labels = vapply(raw, function(x) {
+    labs <- attr(x, "labels")
+    if (is.null(labs)) "" else paste(paste(names(labs), unname(labs), sep="="), collapse="; ")
+  }, character(1))
+)
+knitr::kable(metadata, caption = "SPSS metadata audit: variable labels and value labels")
+```
+
+# Questionnaire-guided codebook
+
+The uploaded questionnaire (Case Exhibit 31.1, pp. 707–709) supplies these key scales. They must not be treated as interchangeable.
+
+| Questionnaire items | Content | Measurement/coding guidance |
+|:--|:--|:--|
+| Q3–Q6 | Employee courtesy, helpfulness, professionalism, availability | Ordinal agreement: 1 = strongly disagree, 5 = strongly agree |
+| Q7–Q8 | Savings and loan rate opinions | Ordinal; 1 = very high, 5 = very low; 6 = no opinion |
+| Q9 | Frequency of statements | Ordinal; 1 = too often, 5 = never |
+| Q10 | Statement accuracy | Ordinal; 1 = excellent, 4 = poor |
+| Q11–Q12, Q27, Q38–Q39 | Yes/no or eligibility | Nominal; verify SPSS labels; case coding guide lists 1 = yes, 2 = no, 3 = no answer |
+| Q13–Q26 | Service awareness | Ordinal: 1 = aware and used, 2 = aware/not used, 3 = unaware |
+| Q30–Q34 | Credit union operational attitudes | Ordinal agreement: 1 = strongly disagree, 5 = strongly agree |
+| Q37 | Overall management rating | Ordinal; 1 = excellent, 5 = very poor; 6 = no answer |
+
+**Important:** Q2 and Q29 allow multiple reasons; treat them as multiple-response indicators where available. The SPSS file may omit some questionnaire items. The codebook below inventories only variables actually present in the file.
+
+```{r}
+#| label: codebook-export
+readr_available <- requireNamespace("readr", quietly = TRUE)
+if (!dir.exists("output")) dir.create("output")
+utils::write.csv(metadata, "output/variable_dictionary.csv", row.names = FALSE)
+```
+
+# Data quality and special-response audit
+
+```{r}
+#| label: quality-audit
+quality <- tibble::tibble(
+  variable = names(raw),
+  missing_n = vapply(raw, function(x) sum(is.na(x)), integer(1)),
+  distinct_n = vapply(raw, function(x) dplyr::n_distinct(x, na.rm = TRUE), integer(1)),
+  missing_pct = round(100 * missing_n / max(nrow(raw), 1), 1)
+)
+knitr::kable(quality, caption = "Missingness and distinct-value audit")
+cat("Entirely duplicated rows:", sum(duplicated(as.data.frame(raw))), "\n")
+```
+
+```{r}
+#| label: response-distributions
+# Examine observed codes before modifying them.
+inspect_names <- intersect(c("Q3", "Q7", "Q10", "Q13", "Q27", "Q30", "Q37", "Q38"), names(raw))
+if (length(inspect_names)) {
+  distribution <- purrr::map_dfr(inspect_names, function(v) {
+    tibble::tibble(variable = v, response = as.character(raw[[v]])) |>
+      dplyr::count(variable, response, name = "n")
+  })
+  knitr::kable(distribution, caption = "Observed response codes for selected questions")
+}
+```
+
+# Preserve raw data and create analysis-ready variables
+
+We retain all original columns. Derived variables use explicit suffixes; missingness is handled by scale rather than replacing every 6 or 3 globally.
+
+```{r}
+#| label: recode
+clean <- raw
+# The case's Exhibit 31.2 lists code 6 as no opinion for Q7/Q8,
+# and no answer for Q37. Keep original codes; make analysis copies.
+for (v in intersect(c("Q7", "Q8", "Q37"), names(clean))) {
+  x <- suppressWarnings(as.numeric(clean[[v]]))
+  x[x == 6] <- NA_real_
+  clean[[paste0(v, "_valid")]] <- x
+}
+# Service-awareness values: 1=used, 2=aware but not used, 3=unaware.
+awareness_vars <- intersect(paste0("Q", 13:26), names(clean))
+for (v in awareness_vars) {
+  x <- suppressWarnings(as.numeric(clean[[v]]))
+  clean[[paste0(v, "_used")]] <- dplyr::if_else(x %in% 1:3, as.integer(x == 1), NA_integer_)
+  clean[[paste0(v, "_aware")]] <- dplyr::if_else(x %in% 1:3, as.integer(x %in% 1:2), NA_integer_)
+}
+cat("New variables created:", ncol(clean) - ncol(raw), "\n")
+```
+
+# Construct preparation and optional composite measures
+
+Employee proficiency is conceptually represented by Q3–Q6. Operational perceptions include Q30–Q34. We compute an **illustrative** mean only when at least 3 of 4 employee items are observed; it is not automatically a validated scale. Do not combine constructs without checking coding and reliability.
+
+```{r}
+#| label: employee-composite
+employee_items <- intersect(paste0("Q", 3:6), names(clean))
+if (length(employee_items) == 4) {
+  employee_matrix <- sapply(clean[employee_items], function(x) suppressWarnings(as.numeric(x)))
+  employee_matrix[!employee_matrix %in% 1:5] <- NA_real_
+  clean$employee_proficiency_mean <- ifelse(
+    rowSums(!is.na(employee_matrix)) >= 3,
+    rowMeans(employee_matrix, na.rm = TRUE), NA_real_
+  )
+  cat("Employee proficiency mean: available for", sum(!is.na(clean$employee_proficiency_mean)), "cases\n")
+  if (requireNamespace("psych", quietly = TRUE)) {
+    complete_items <- as.data.frame(employee_matrix)
+    if (sum(stats::complete.cases(complete_items)) >= 10) {
+      print(psych::alpha(complete_items, warnings = FALSE)$total[c("raw_alpha", "std.alpha")])
+    }
+  } else {
+    cat("Optional: install.packages('psych') for Cronbach alpha.\n")
+  }
+}
+```
+
+# Descriptive visualization
+
+```{r}
+#| label: chart
+if ("Q37_valid" %in% names(clean)) {
+  plot_data <- tibble::tibble(rating = clean$Q37_valid) |>
+    dplyr::filter(!is.na(rating)) |>
+    dplyr::count(rating)
+  ggplot2::ggplot(plot_data, ggplot2::aes(x = factor(rating), y = n)) +
+    ggplot2::geom_col(fill = "#315a78") +
+    ggplot2::labs(title = "Overall credit union management rating (Q37)",
+                  subtitle = "1 = Excellent; 5 = Very poor. Code 6 excluded as no answer.",
+                  x = "Response code", y = "Number of respondents") +
+    ggplot2::theme_minimal(base_size = 13)
+}
+```
+
+# Validation and export
+
+```{r}
+#| label: validation-export
+stopifnot(nrow(clean) == nrow(raw))
+stopifnot(all(names(raw) %in% names(clean)))
+stopifnot(!anyDuplicated(names(clean)))
+# Export SPSS-compatible cleaned data and an R-readable snapshot.
+haven::write_sav(clean, "output/Case31_cleaned.sav")
+saveRDS(clean, "output/Case31_cleaned.rds")
+knitr::kable(tibble::tibble(
+  metric = c("Raw observations", "Cleaned observations", "Raw columns", "Prepared columns"),
+  value = c(nrow(raw), nrow(clean), ncol(raw), ncol(clean))
+), caption = "Before/after structural validation")
+```
+
+# Preparation decisions and limitations
+
+- The original SPSS file is never overwritten.
+- Special codes are recoded **only** where the questionnaire identifies them.
+- The script does not delete records based solely on unusual values or apparent duplicate answers.
+- A repeated row is not proof of a duplicate respondent without a unique identifier.
+- The employee proficiency composite is exploratory; assess reliability and construct validity before substantive interpretation.
+- Confirm discrepancies between SPSS metadata and the questionnaire before changing raw variable labels.
+- The sample in the data file is not assumed to equal the case's mailed sample of 300.
+
+# Appendix: Reproducibility and publication
+
+**Repository:** [Insert your actual GitHub repository URL here]
+
+**Published report:** [Insert your actual GitHub Pages URL here]
+
+To publish, render this document, commit the `.qmd` and rendered HTML along with any permitted source files, and configure GitHub Pages for the repository. Do not publish private or restricted datasets without authorization.
+
+**Source documents:** Case 31, *Employees Federal Credit Union*, pp. 705–709 (provided PDF); *Case 31 Data_efcu_1.sav* (provided SPSS dataset); course assignment instructions.
